@@ -1,4 +1,4 @@
-"use client";
+'use client';
 const Footer = () => {
   return (
     <div className="w-full fixed bottom-0 left-0 ">
@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="bg-teal-400/10 backdrop-blur-md">
         <div
           className="flex items-center justify-center gap-6 py-4"
-          style={{ fontFamily: "MinecraftRegular" }}
+          style={{ fontFamily: 'MinecraftRegular' }}
         >
           <a
             href="https://twitter.com"

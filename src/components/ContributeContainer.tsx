@@ -1,6 +1,6 @@
 // components/ContributeContainer.tsx
-"use client";
-import ConnectButton from "./ConnectButton";
+'use client';
+import ConnectButton from './ConnectButton';
 
 const ContributeContainer = () => {
   return (

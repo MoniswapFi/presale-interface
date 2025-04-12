@@ -1,8 +1,8 @@
 // components/ConnectButton.tsx
-"use client";
-import { useState } from "react";
-import { useAccount } from "wagmi";
-import ContributeModal from "./ContributeModal";
+'use client';
+import { useState } from 'react';
+import { useAccount } from 'wagmi';
+import ContributeModal from './ContributeModal';
 
 const ConnectButton = () => {
   const { address } = useAccount();

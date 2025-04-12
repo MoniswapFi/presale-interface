@@ -1,42 +1,93 @@
-"use client";
-import React, { useState, useEffect } from "react";
-import Image from "next/image";
-import Logo from "../../public/Logo.png";
-import Rocket from "../../public/Rocket.png";
-import { ContributeContainer } from "@/components/ConnectButton";
+'use client';
+import React, { useMemo } from 'react';
+import Image from 'next/image';
+import Logo from '../../public/Logo.png';
+import Rocket from '../../public/Rocket.png';
+import { ContributeContainer } from '@/components/ConnectButton';
+import { useSaleReadables } from '@/hooks/onchain/useSaleHooks';
+import { useAtomicDate } from '@/hooks/misc/useAtomicDate';
+import { useERC20Metadata } from '@/hooks/onchain/useERC20Hooks';
+import { formatUnits } from 'viem';
+import { toSF } from '@/utils/format';
 
 const Page = () => {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const now = useAtomicDate();
+  const {
+    useSoldToken,
+    useDuration,
+    useStartTime,
+    useAccountContributions,
+    useSlotFilled,
+    useSlotLeft,
+    useExchangeToken,
+    useRate,
+  } = useSaleReadables();
+  const startTime = useStartTime();
+  const duration = useDuration();
+  const contributions = useAccountContributions();
+  const slotFilled = useSlotFilled();
+  const slotLeft = useSlotLeft();
+  const exchangeToken = useExchangeToken();
+  const soldToken = useSoldToken();
+  const rate = useRate();
 
-  // Set target date to March 22nd at 12:00 CST
-  useEffect(() => {
-    const calculateTimeLeft = () => {
-      const targetDate = new Date("March 25, 2025 12:00:00 CST");
-      const now = new Date();
-      const difference = targetDate.getTime() - now.getTime();
+  const {
+    useDecimals: useExchangeTokenDecimals,
+    useSymbol: useExchangeTokenSymbol,
+  } = useERC20Metadata(exchangeToken);
+  const { useDecimals: useSoldTokenDecimals, useSymbol: useSoldTokenSymbol } =
+    useERC20Metadata(soldToken);
+  const exchangeTokenSymbol = useExchangeTokenSymbol();
+  const exchangeTokenDecimals = useExchangeTokenDecimals();
+  const soldTokenSymbol = useSoldTokenSymbol();
+  const soldTokenDecimals = useSoldTokenDecimals();
 
-      if (difference > 0) {
-        setTimeLeft({
-          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
-          hours: Math.floor(
-            (difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
-          ),
-          minutes: Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60)),
-          seconds: Math.floor((difference % (1000 * 60)) / 1000),
-        });
-      }
-    };
+  const goal = useMemo(() => {
+    const total = slotLeft + slotFilled;
+    const g =
+      (total * rate * BigInt(10 ** exchangeTokenDecimals)) /
+      BigInt(10 ** (soldTokenDecimals + soldTokenDecimals));
+    return g;
+  }, [slotLeft, slotFilled, exchangeTokenDecimals, soldTokenDecimals, rate]);
 
-    calculateTimeLeft();
-    const timer = setInterval(calculateTimeLeft, 1000);
+  const raised = useMemo(() => {
+    return (
+      (slotFilled * rate * BigInt(10 ** exchangeTokenDecimals)) /
+      BigInt(10 ** (soldTokenDecimals + soldTokenDecimals))
+    );
+  }, [slotFilled, rate, exchangeTokenDecimals, soldTokenDecimals]);
 
-    return () => clearInterval(timer);
-  }, []);
+  const allocation = useMemo(() => {
+    return (contributions * rate) / BigInt(10 ** exchangeTokenDecimals);
+  }, [contributions, rate, exchangeTokenDecimals]);
+
+  const progress = useMemo(() => {
+    const total = slotLeft + slotFilled;
+    const p =
+      total > BigInt(0) ? (slotFilled * BigInt(10 ** 4)) / total : BigInt(0);
+    return Number(p) / 10 ** 2;
+  }, [slotLeft, slotFilled]);
+
+  const { isStart, timeLeft } = useMemo(() => {
+    const trimmedNow = Math.floor(now.getTime() / 1000);
+    const isStart = BigInt(trimmedNow) <= startTime;
+    const timeLeft: {
+      days: number;
+      hours: number;
+      minutes: number;
+      seconds: number;
+    } = { days: 0, hours: 0, minutes: 0, seconds: 0 };
+    const asNumber = !isStart
+      ? Number(startTime + duration)
+      : Number(startTime);
+
+    const diff = asNumber - trimmedNow;
+    timeLeft.days = Math.floor(diff / (60 * 60 * 24)) % 30;
+    timeLeft.hours = Math.floor(diff / (60 * 60)) % 24;
+    timeLeft.minutes = Math.floor(diff / 60) % 60;
+    timeLeft.seconds = diff % 60;
+    return { isStart, timeLeft };
+  }, [now, startTime, duration]);
 
   return (
     <div className="w-full min-h-screen bg-[#101014] text-white font-['MinecraftRegular',sans-serif] p-4 md:p-8">
@@ -68,14 +119,19 @@ const Page = () => {
               <div className="space-y-4">
                 <div className="flex justify-between border-b border-gray-700 pb-2">
                   <span>Total Commited</span>
-                  <span>0.00 BERA</span>
+                  <span>
+                    {toSF(formatUnits(contributions, exchangeTokenDecimals))}{' '}
+                    {exchangeTokenSymbol}
+                  </span>
                 </div>
 
                 <h3 className="text-lg mt-4">Distribution</h3>
 
                 <div className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>MONI</span>
-                  <span>0.00</span>
+                  <span>{soldTokenSymbol}</span>
+                  <span>
+                    {toSF(formatUnits(allocation, soldTokenDecimals))}
+                  </span>
                 </div>
 
                 <div className="flex justify-between border-b border-gray-700 pb-2">
@@ -106,29 +162,31 @@ const Page = () => {
             </div>
 
             <div className="mb-6">
-              <p className="text-gray-400 mb-2">Ends In</p>
+              <p className="text-gray-400 mb-2">
+                {isStart ? 'Starts In' : 'Ends In'}
+              </p>
               <div className="grid grid-cols-4 gap-2 text-center bg-[#101014] p-4 rounded">
                 <div>
                   <div className="text-2xl font-bold">
-                    {String(timeLeft.days).padStart(2, "0")}
+                    {String(timeLeft.days).padStart(2, '0')}
                   </div>
                   <div className="text-gray-400 text-sm">Days</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">
-                    {String(timeLeft.hours).padStart(2, "0")}
+                    {String(timeLeft.hours).padStart(2, '0')}
                   </div>
                   <div className="text-gray-400 text-sm">Hours</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">
-                    {String(timeLeft.minutes).padStart(2, "0")}
+                    {String(timeLeft.minutes).padStart(2, '0')}
                   </div>
                   <div className="text-gray-400 text-sm">Minutes</div>
                 </div>
                 <div>
                   <div className="text-2xl font-bold">
-                    {String(timeLeft.seconds).padStart(2, "0")}
+                    {String(timeLeft.seconds).padStart(2, '0')}
                   </div>
                   <div className="text-gray-400 text-sm">Seconds</div>
                 </div>
@@ -139,36 +197,51 @@ const Page = () => {
               <div>
                 <div className="w-full flex justify-between items-center my-3">
                   <span className="text-gray-400 text-xl">Progress</span>
-                  <span className="text-xl">0%</span>
+                  <span className="text-xl">{toSF(progress, 2)}%</span>
                 </div>
                 <div className="w-full bg-[#101014] h-2 ">
-                  <div className="bg-[#FF8902] h-2  w-0"></div>
+                  <div
+                    className="bg-[#FF8902] h-2"
+                    style={{ width: `${progress}%` }}
+                  ></div>
                 </div>
               </div>
 
               <div className="flex justify-between border-b border-gray-700 pb-2">
-                <span>Bera Rate</span>
-                <span>0.06 BERA = 1 MONI</span>
+                <span>{soldTokenSymbol} Rate</span>
+                <span>
+                  1 {exchangeTokenSymbol} ={' '}
+                  {toSF(formatUnits(rate, soldTokenDecimals))} {soldTokenSymbol}
+                </span>
               </div>
 
-              <div className="flex justify-between border-b border-gray-700 pb-2">
+              {/* <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>USDC Rate</span>
                 <span>1 USDC = 200 MONI</span>
-              </div>
+              </div> */}
 
               <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>Goal</span>
-                <span>10,000 BERA</span>
+                <span>
+                  {toSF(formatUnits(goal, exchangeTokenDecimals))}{' '}
+                  {exchangeTokenSymbol}
+                </span>
               </div>
 
               <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>Raised</span>
-                <span>0.00 BERA</span>
+                <span>
+                  {toSF(formatUnits(raised, exchangeTokenDecimals))}{' '}
+                  {exchangeTokenSymbol}
+                </span>
               </div>
 
               <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>Available for Sale</span>
-                <span>20,000,000 MONI</span>
+                <span>
+                  {toSF(formatUnits(slotLeft, soldTokenDecimals))}{' '}
+                  {soldTokenSymbol}
+                </span>
               </div>
 
               <div className="flex justify-between border-b border-gray-700 pb-2">
@@ -176,10 +249,10 @@ const Page = () => {
                 <span>Berachain</span>
               </div>
 
-              <div className="flex justify-between border-b border-gray-700 pb-2">
+              {/* <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>Total Investors</span>
                 <span>0</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -195,15 +268,15 @@ const Page = () => {
               <div
                 className="w-16 h-16 flex items-center justify-center font-bold text-xl mr-4"
                 style={{
-                  background: "linear-gradient(to right, #474747, #191919)",
+                  background: 'linear-gradient(to right, #474747, #191919)',
                 }}
               >
                 <span
                   className="font-bold text-xl"
                   style={{
-                    background: "linear-gradient(to right, #FF8902, #824BC2)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: 'linear-gradient(to right, #FF8902, #824BC2)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   1
@@ -222,15 +295,15 @@ const Page = () => {
               <div
                 className="w-16 h-16 flex items-center justify-center font-bold text-xl mr-4"
                 style={{
-                  background: "linear-gradient(to right, #474747, #191919)",
+                  background: 'linear-gradient(to right, #474747, #191919)',
                 }}
               >
                 <span
                   className="font-bold text-xl"
                   style={{
-                    background: "linear-gradient(to right, #FF8902, #824BC2)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: 'linear-gradient(to right, #FF8902, #824BC2)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   2
@@ -248,15 +321,15 @@ const Page = () => {
               <div
                 className="w-16 h-16 flex items-center justify-center font-bold text-xl mr-4"
                 style={{
-                  background: "linear-gradient(to right, #474747, #191919)",
+                  background: 'linear-gradient(to right, #474747, #191919)',
                 }}
               >
                 <span
                   className="font-bold text-xl"
                   style={{
-                    background: "linear-gradient(to right, #FF8902, #824BC2)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: 'linear-gradient(to right, #FF8902, #824BC2)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   3
@@ -265,8 +338,8 @@ const Page = () => {
               <div>
                 <h3 className="text-xl mb-1">Commit BERA</h3>
                 <p className="text-gray-400">
-                  Once the sale concludes, you&apos;ll be able to claim the tokens
-                  you purchased.
+                  Once the sale concludes, you&apos;ll be able to claim the
+                  tokens you purchased.
                 </p>
               </div>
             </div>
@@ -275,15 +348,15 @@ const Page = () => {
               <div
                 className="w-16 h-16 flex items-center justify-center font-bold text-xl mr-4"
                 style={{
-                  background: "linear-gradient(to right, #474747, #191919)",
+                  background: 'linear-gradient(to right, #474747, #191919)',
                 }}
               >
                 <span
                   className="font-bold text-xl"
                   style={{
-                    background: "linear-gradient(to right, #FF8902, #824BC2)",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
+                    background: 'linear-gradient(to right, #FF8902, #824BC2)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
                   }}
                 >
                   4
@@ -310,8 +383,8 @@ const Page = () => {
                 What is the difference between $MONI and $veMONI?
               </h3>
               <p className="mb-4">
-                $MONI is Moniswap&apos;s ERC-20 utility token, enabling transactions
-                and interactions within our ecosystem.
+                $MONI is Moniswap&apos;s ERC-20 utility token, enabling
+                transactions and interactions within our ecosystem.
               </p>
               <p className="mb-4">
                 $veMONI, on the other hand, is the vote-escrow version of $MONI,

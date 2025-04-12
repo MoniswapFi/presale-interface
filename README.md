@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+
 # Reown AppKit Example using wagmi (next.js with App Router)
 
 This is a Next.js project.
@@ -14,8 +15,10 @@ This is a Next.js project.
 ## Resources
 
 - [Reown — Docs](https://docs.reown.com)
-- [Next.js — Docs](https://nextjs.org/docs)
-=======
+- # [Next.js — Docs](https://nextjs.org/docs)
+
 # Bera-Airdrop
-The repository for the purchasing of $MONI tokens. This is different to Bera-Drop. 
->>>>>>> 1e1640db503224c86473eb06e4ede39e2e188182
+
+The repository for the purchasing of $MONI tokens. This is different to Bera-Drop.
+
+> > > > > > > 1e1640db503224c86473eb06e4ede39e2e188182
