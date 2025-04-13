@@ -5,6 +5,7 @@ COPY public ./public/
 COPY .env ./
 COPY next.config.ts ./
 COPY *.json ./
+COPY *.mjs ./
 RUN yarn
 RUN yarn build
 EXPOSE 5677
