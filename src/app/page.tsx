@@ -513,8 +513,7 @@ const Page = () => {
             <div className="bg-[#1E1E1E] p-6 rounded">
               <h3 className="text-xl mb-4">When can I claim my tokens?</h3>
               <p>
-                You can claim your tokens after the public
-                sale ends.
+                You can claim your tokens during TGE
               </p>
             </div>
           </div>
