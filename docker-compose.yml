@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+  presale:
+    hostname: presale
+    container_name: presale
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # networks:
+    #     - admin-cockpit
+    ports:
+      - 5500:5500

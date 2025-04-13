@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
   title: 'MoniSwap Token Sale',
-  description: "Purchase $MONI!",
+  description: 'Purchase $MONI!',
 };
 
 export default async function RootLayout({
