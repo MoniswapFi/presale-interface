@@ -82,21 +82,26 @@ const Page = () => {
 
   const goal = useMemo(() => {
     const total = slotLeft + slotFilled;
-    const g = (total * BigInt(10 ** exchangeTokenDecimals)) / rate;
+    const g =
+      rate > BigInt(0)
+        ? (total * BigInt(10 ** exchangeTokenDecimals)) / rate
+        : BigInt(0);
     return g;
   }, [slotLeft, slotFilled, exchangeTokenDecimals, rate]);
 
   const raised = useMemo(() => {
-    return (slotFilled * BigInt(10 ** exchangeTokenDecimals)) / rate;
+    return rate > BigInt(0)
+      ? (slotFilled * BigInt(10 ** exchangeTokenDecimals)) / rate
+      : BigInt(0);
   }, [slotFilled, rate, exchangeTokenDecimals]);
 
   const exchangeTokenRate = useMemo(() => {
-    return (
-      (BigInt(1) *
-        BigInt(10 ** exchangeTokenDecimals) *
-        BigInt(10 ** soldTokenDecimals)) /
-      rate
-    );
+    return rate > BigInt(0)
+      ? (BigInt(1) *
+          BigInt(10 ** exchangeTokenDecimals) *
+          BigInt(10 ** soldTokenDecimals)) /
+          rate
+      : BigInt(0);
   }, [rate, soldTokenDecimals, exchangeTokenDecimals]);
 
   const allocation = useMemo(() => {
