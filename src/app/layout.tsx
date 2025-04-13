@@ -5,8 +5,8 @@ import ContextProvider from '@/context';
 import Footer from '@/components/Footer';
 
 export const metadata: Metadata = {
-  title: 'MoniSwap Token Airdrop',
-  description: "Check if you're eligible for the $MONI token!",
+  title: 'MoniSwap Token Sale',
+  description: "Purchase $MONI!",
 };
 
 export default async function RootLayout({
