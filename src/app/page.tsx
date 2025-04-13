@@ -389,7 +389,7 @@ const Page = () => {
                 </span>
               </div>
               <div>
-                <h3 className="text-xl mb-1">Get {soldTokenSymbol}</h3>
+                <h3 className="text-xl mb-1">Get {exchangeTokenSymbol}</h3>
                 <p className="text-gray-400">
                   You&apos;ll use them to purchase tokens during the sale.
                 </p>
@@ -415,7 +415,7 @@ const Page = () => {
                 </span>
               </div>
               <div>
-                <h3 className="text-xl mb-1">Commit {soldTokenSymbol}</h3>
+                <h3 className="text-xl mb-1">Commit {exchangeTokenSymbol}</h3>
                 <p className="text-gray-400">
                   Once the sale concludes, you&apos;ll be able to claim the
                   tokens you purchased.
@@ -513,7 +513,7 @@ const Page = () => {
             <div className="bg-[#1E1E1E] p-6 rounded">
               <h3 className="text-xl mb-4">When can I claim my tokens?</h3>
               <p>
-                You can claim your tokens on April 19, one day after the private
+                You can claim your tokens after the public
                 sale ends.
               </p>
             </div>
