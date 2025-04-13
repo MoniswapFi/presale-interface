@@ -142,5 +142,19 @@ export function useSaleExecutables() {
     );
   }
 
-  return { contribute };
+  function claim(
+    onSuccess?: (hash: `0x${string}`) => void,
+    onError?: (error: any) => void,
+  ) {
+    return writeContract(
+      {
+        ...Sale,
+        address: sale,
+        functionName: 'claimAllocation',
+      },
+      { onSuccess, onError },
+    );
+  }
+
+  return { contribute, claim };
 }

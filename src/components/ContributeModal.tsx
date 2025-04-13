@@ -130,7 +130,7 @@ const ContributeModal = ({ isOpen, onClose }: ContributeModalProps) => {
 
             <div className="bg-[#2A2A2A] p-4 flex items-center">
               <div className="mr-4">
-                <Image src="/USDC.svg" width={40} height={40} alt="BERA" />
+                <Image src="/HONEY.png" width={40} height={40} alt="BERA" />
               </div>
               <input
                 value={String(contributionAmount)}

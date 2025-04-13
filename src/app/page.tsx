@@ -1,14 +1,52 @@
 'use client';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Logo from '../../public/Logo.png';
 import Rocket from '../../public/Rocket.png';
 import { ContributeContainer } from '@/components/ConnectButton';
-import { useSaleReadables } from '@/hooks/onchain/useSaleHooks';
+import {
+  useSaleExecutables,
+  useSaleReadables,
+} from '@/hooks/onchain/useSaleHooks';
 import { useAtomicDate } from '@/hooks/misc/useAtomicDate';
 import { useERC20Metadata } from '@/hooks/onchain/useERC20Hooks';
 import { formatUnits } from 'viem';
 import { toSF } from '@/utils/format';
+
+const releaseSchedule = [
+  {
+    percentageRelease: 30,
+    label: 'MONI',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 30 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 60 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 90 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 120 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 150 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 180 days',
+  },
+  {
+    percentageRelease: 10,
+    label: 'veMONI 210 days',
+  },
+];
 
 const Page = () => {
   const now = useAtomicDate();
@@ -44,18 +82,22 @@ const Page = () => {
 
   const goal = useMemo(() => {
     const total = slotLeft + slotFilled;
-    const g =
-      (total * rate * BigInt(10 ** exchangeTokenDecimals)) /
-      BigInt(10 ** (soldTokenDecimals + soldTokenDecimals));
+    const g = (total * BigInt(10 ** exchangeTokenDecimals)) / rate;
     return g;
-  }, [slotLeft, slotFilled, exchangeTokenDecimals, soldTokenDecimals, rate]);
+  }, [slotLeft, slotFilled, exchangeTokenDecimals, rate]);
 
   const raised = useMemo(() => {
+    return (slotFilled * BigInt(10 ** exchangeTokenDecimals)) / rate;
+  }, [slotFilled, rate, exchangeTokenDecimals]);
+
+  const exchangeTokenRate = useMemo(() => {
     return (
-      (slotFilled * rate * BigInt(10 ** exchangeTokenDecimals)) /
-      BigInt(10 ** (soldTokenDecimals + soldTokenDecimals))
+      (BigInt(1) *
+        BigInt(10 ** exchangeTokenDecimals) *
+        BigInt(10 ** soldTokenDecimals)) /
+      rate
     );
-  }, [slotFilled, rate, exchangeTokenDecimals, soldTokenDecimals]);
+  }, [rate, soldTokenDecimals, exchangeTokenDecimals]);
 
   const allocation = useMemo(() => {
     return (contributions * rate) / BigInt(10 ** exchangeTokenDecimals);
@@ -89,6 +131,27 @@ const Page = () => {
     return { isStart, timeLeft };
   }, [now, startTime, duration]);
 
+  const { claim } = useSaleExecutables();
+  const [isLoading, setIsLoading] = useState(false);
+  const isOpenForClaim = useMemo(
+    () =>
+      !isStart &&
+      timeLeft.days <= 0 &&
+      timeLeft.hours <= 0 &&
+      timeLeft.minutes <= 0 &&
+      timeLeft.seconds <= 0,
+    [isStart, timeLeft],
+  );
+
+  const submit = useCallback(() => {
+    if (!isOpenForClaim) return;
+    setIsLoading(true);
+    claim(
+      () => setIsLoading(false),
+      () => setIsLoading(false),
+    );
+  }, [isOpenForClaim, claim]);
+
   return (
     <div className="w-full min-h-screen bg-[#101014] text-white font-['MinecraftRegular',sans-serif] p-4 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -104,11 +167,11 @@ const Page = () => {
           {/* Left Panel - Title and Contribution Data */}
           <div>
             <h1 className="text-3xl md:text-5xl text-orange-500 mb-6">
-              Join Moniswap Public Sale!
+              Join Moniswap Private Sale!
             </h1>
             <div className="text-center md:text-left">
               <p className="text-gray-300 mb-4">
-                Join the Moniswap Token public sale and be part of an exciting
+                Join the Moniswap Token private sale and be part of an exciting
                 journey on Berachain!
               </p>
             </div>
@@ -126,28 +189,24 @@ const Page = () => {
                 </div>
 
                 <h3 className="text-lg mt-4">Distribution</h3>
-
-                <div className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>{soldTokenSymbol}</span>
-                  <span>
-                    {toSF(formatUnits(allocation, soldTokenDecimals))}
-                  </span>
-                </div>
-
-                <div className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>veMONI 30 days</span>
-                  <span>0.00</span>
-                </div>
-
-                <div className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>veMONI 60 days</span>
-                  <span>0.00</span>
-                </div>
-
-                <div className="flex justify-between border-b border-gray-700 pb-2">
-                  <span>veMONI 90 days</span>
-                  <span>0.00</span>
-                </div>
+                {releaseSchedule.map((rs, index) => (
+                  <div
+                    key={index}
+                    className="flex justify-between border-b border-gray-700 pb-2"
+                  >
+                    <span>{rs.label}</span>
+                    <span>
+                      {toSF(
+                        formatUnits(
+                          BigInt(rs.percentageRelease) *
+                            BigInt(100) *
+                            allocation,
+                          soldTokenDecimals + 4,
+                        ),
+                      )}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
@@ -158,7 +217,7 @@ const Page = () => {
               <div className="w-10 h-10 rounded-full mr-3">
                 <Image src={Logo} alt="Logo" width={40} height={40} />
               </div>
-              <h2 className="text-xl">Public Sale</h2>
+              <h2 className="text-xl">Private Sale</h2>
             </div>
 
             <div className="mb-6">
@@ -210,8 +269,11 @@ const Page = () => {
               <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>{soldTokenSymbol} Rate</span>
                 <span>
-                  1 {exchangeTokenSymbol} ={' '}
-                  {toSF(formatUnits(rate, soldTokenDecimals))} {soldTokenSymbol}
+                  {toSF(
+                    formatUnits(exchangeTokenRate, exchangeTokenDecimals),
+                    4,
+                  )}{' '}
+                  {exchangeTokenSymbol} = 1 {soldTokenSymbol}
                 </span>
               </div>
 
@@ -248,6 +310,18 @@ const Page = () => {
                 <span>Raise Network</span>
                 <span>Berachain</span>
               </div>
+
+              <button
+                onClick={submit}
+                disabled={isLoading || !isOpenForClaim}
+                className="w-full bg-white text-black py-4 text-xl font-bold mb-8 cursor-pointer my-7"
+              >
+                {isLoading ? (
+                  'Loading...'
+                ) : (
+                  <>{isOpenForClaim ? 'Claim' : 'Cannot claim now'}</>
+                )}
+              </button>
 
               {/* <div className="flex justify-between border-b border-gray-700 pb-2">
                 <span>Total Investors</span>
@@ -310,7 +384,7 @@ const Page = () => {
                 </span>
               </div>
               <div>
-                <h3 className="text-xl mb-1">Get BERA</h3>
+                <h3 className="text-xl mb-1">Get {soldTokenSymbol}</h3>
                 <p className="text-gray-400">
                   You&apos;ll use them to purchase tokens during the sale.
                 </p>
@@ -336,7 +410,7 @@ const Page = () => {
                 </span>
               </div>
               <div>
-                <h3 className="text-xl mb-1">Commit BERA</h3>
+                <h3 className="text-xl mb-1">Commit {soldTokenSymbol}</h3>
                 <p className="text-gray-400">
                   Once the sale concludes, you&apos;ll be able to claim the
                   tokens you purchased.
@@ -434,8 +508,8 @@ const Page = () => {
             <div className="bg-[#1E1E1E] p-6 rounded">
               <h3 className="text-xl mb-4">When can I claim my tokens?</h3>
               <p>
-                You can claim your tokens on March the 28th, one day after the
-                public sale ends.
+                You can claim your tokens on April 19, one day after the private
+                sale ends.
               </p>
             </div>
           </div>

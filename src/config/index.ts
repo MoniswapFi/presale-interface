@@ -14,7 +14,7 @@ if (!projectId) {
   throw new Error('Project ID is not defined');
 }
 
-export const networks = [berachainBepolia, berachain] as [
+export const networks = [berachain, berachainBepolia] as [
   AppKitNetwork,
   ...AppKitNetwork[],
 ];
