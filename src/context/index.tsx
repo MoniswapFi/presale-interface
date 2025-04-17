@@ -20,6 +20,7 @@ const metadata = {
 // Create the modal
 export const modal = createAppKit({
   adapters: [wagmiAdapter],
+  defaultNetwork: networks[0],
   projectId,
   networks,
   metadata,

@@ -1,4 +1,4 @@
-import { cookieStorage, createStorage } from 'wagmi';
+import { cookieStorage, createStorage, http } from 'wagmi';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import {
   berachainBepolia,
@@ -27,6 +27,10 @@ export const wagmiAdapter = new WagmiAdapter({
   ssr: true,
   projectId,
   networks,
+  transports: {
+    [berachain.id]: http(),
+    [berachainBepolia.id]: http(),
+  },
 });
 
 export const config = wagmiAdapter.wagmiConfig;

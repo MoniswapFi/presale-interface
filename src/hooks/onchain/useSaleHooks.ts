@@ -34,7 +34,7 @@ export function useSaleReadables() {
       address: sale,
       functionName: 'slotLeft',
       query: {
-        enabled: !!sale && sale !== zeroAddress && address !== zeroAddress,
+        enabled: !!sale && sale !== zeroAddress,
         refetchInterval,
       },
     });
@@ -47,7 +47,7 @@ export function useSaleReadables() {
       address: sale,
       functionName: 'slotFilled',
       query: {
-        enabled: !!sale && sale !== zeroAddress && address !== zeroAddress,
+        enabled: !!sale && sale !== zeroAddress,
         refetchInterval,
       },
     });
@@ -60,7 +60,7 @@ export function useSaleReadables() {
       address: sale,
       functionName: 'rate',
       query: {
-        enabled: !!sale && sale !== zeroAddress && address !== zeroAddress,
+        enabled: !!sale && sale !== zeroAddress,
         refetchInterval,
       },
     });
